@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>BCSFE Control</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#07090e;--surface:#0d1118;--surface2:#121720;--surface3:#171d28;
+  --line:#242c3a;--line2:#323c4e;--text:#f1f5fb;--muted:#8d99ab;
+  --cyan:#25c7f7;--cyan2:#0a8fbd;--green:#62dfa0;--red:#ff6f7e;--yellow:#f8ce68;
+  --shadow:0 18px 60px rgba(0,0,0,.36);
+}
+html{background:var(--bg)}
+body{
+  margin:0;color:var(--text);background:
+  radial-gradient(900px 420px at 12% -10%,rgba(37,199,247,.10),transparent 62%),
+  radial-gradient(700px 360px at 88% 4%,rgba(58,93,255,.08),transparent 60%),var(--bg);
+  font-family:Inter,"Segoe UI","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+  min-height:100vh
+}
+button,input{font:inherit}
+button{user-select:none}
+.topbar{
+  height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+  border-bottom:1px solid rgba(255,255,255,.065);background:rgba(7,9,14,.82);
+  backdrop-filter:blur(18px);position:sticky;top:0;z-index:20
+}
+.brand{display:flex;align-items:center;gap:11px;font-weight:900;letter-spacing:.01em}
+.logo{width:33px;height:33px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#1cdefe,#087ca9);color:#021016;box-shadow:0 0 24px rgba(37,199,247,.18)}
+.brand small{display:block;color:var(--muted);font-weight:600;font-size:10px;margin-top:2px}
+.engine-pill{display:flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:#0b0f16;color:var(--muted);font-size:11px}
+.dot{width:7px;height:7px;border-radius:50%;background:#5d6675;box-shadow:0 0 0 3px rgba(93,102,117,.08)}
+.engine-pill.online .dot{background:var(--green);box-shadow:0 0 14px rgba(98,223,160,.6)}
+.engine-pill.online{color:#b7f4d3;border-color:rgba(98,223,160,.25)}
+.engine-pill.offline{color:#ffc0c7;border-color:rgba(255,111,126,.25)}
+.container{width:min(1180px,calc(100% - 28px));margin:26px auto 80px}
+.hero{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;margin-bottom:18px}
+.hero h1{font-size:28px;margin:0 0 7px;letter-spacing:-.025em}
+.hero p{margin:0;color:var(--muted);font-size:12px;line-height:1.7}
+.hero-badge{padding:9px 12px;border:1px solid #203a45;background:rgba(37,199,247,.07);border-radius:10px;color:#75ddfa;font-size:11px}
+.offline-note{display:none;margin:0 0 14px;padding:13px 15px;border:1px solid rgba(248,206,104,.22);border-radius:12px;background:rgba(248,206,104,.06);color:#e8ca82;font-size:12px;line-height:1.7}
+.offline-note.show{display:block}
+.grid-shell{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.card{border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(18,23,32,.98),rgba(12,16,23,.98));box-shadow:var(--shadow)}
+.card-head{padding:16px 17px 13px;border-bottom:1px solid rgba(255,255,255,.055);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-title{font-size:12px;font-weight:900;color:#dfe7f2;display:flex;gap:9px;align-items:center}
+.card-title:before{content:"";width:3px;height:14px;border-radius:3px;background:var(--cyan)}
+.card-sub{font-size:10px;color:var(--muted)}
+.card-body{padding:16px}
+.counts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.counts label input{display:none}
+.counts span{display:block;text-align:center;padding:9px 7px;border-radius:8px;border:1px solid var(--line2);background:#0b0f16;color:#99a5b7;font-size:11px;cursor:pointer;transition:.16s}
+.counts input:checked+span{color:#7ee3ff;border-color:#1faed7;background:#0a2935;box-shadow:inset 0 0 0 1px rgba(37,199,247,.09)}
+.section{margin-top:14px}
+.section:first-child{margin-top:0}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;color:#aeb8c8;font-size:11px;font-weight:800}
+.option-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.opt{display:flex;align-items:flex-start;gap:9px;min-height:45px;padding:10px 11px;border:1px solid #252d3a;border-radius:9px;background:#0b0f16;cursor:pointer;transition:.14s;color:#c9d1dd;font-size:11px;line-height:1.45}
+.opt:hover{border-color:#364255;background:#101620}
+.opt input{appearance:none;width:15px;height:15px;flex:0 0 auto;margin:0;border-radius:4px;border:1px solid #445064;background:#090c11}
+.opt input:checked{border-color:var(--cyan);background:var(--cyan);box-shadow:inset 0 0 0 3px #0b0f16}
+.opt:has(input:checked){border-color:rgba(37,199,247,.42);background:rgba(37,199,247,.055);color:#dcf7ff}
+.values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:10px}
+.field label{display:block;color:#8d99ab;font-size:10px;margin:0 0 6px}
+.field input{width:100%;height:37px;padding:0 10px;color:#eaf0f8;background:#090d13;border:1px solid #2c3544;border-radius:8px;outline:none}
+.field input:focus{border-color:#239fc8;box-shadow:0 0 0 3px rgba(37,199,247,.06)}
+.search{width:210px;height:32px;padding:0 10px;background:#0a0e14;border:1px solid #293241;border-radius:8px;color:#dce5f1;outline:none;font-size:11px}
+.side{position:sticky;top:80px}
+.selected-box{min-height:86px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px}
+.empty{color:#707c8f;font-size:11px}
+.chip{padding:5px 7px;border-radius:6px;background:#102630;border:1px solid #1b4a59;color:#7bdffb;font-size:10px}
+.actions{display:grid;gap:8px;margin-top:12px}
+.btn{height:43px;border-radius:9px;border:1px solid #303a49;background:#151b25;color:#e4ebf5;font-weight:850;font-size:11px;cursor:pointer;transition:.15s}
+.btn:hover{transform:translateY(-1px);border-color:#435166}
+.btn.primary{background:linear-gradient(180deg,#1ab9e7,#078ab4);border-color:#22bee9;color:#02131a;box-shadow:0 8px 24px rgba(17,172,218,.15)}
+.btn.ghost{background:#0a0e14;color:#9da8b8}
+.btn:disabled{opacity:.48;cursor:wait;transform:none}
+.status{margin-top:11px;padding:11px;border:1px solid #242c38;border-radius:9px;background:#090d13;color:#8f9caf;font-size:10px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.status.ok{border-color:rgba(98,223,160,.22);background:rgba(98,223,160,.055);color:#a9ebc8}
+.status.err{border-color:rgba(255,111,126,.22);background:rgba(255,111,126,.055);color:#ffc0c7}
+.results{margin-top:14px;display:grid;gap:10px}
+.result{border:1px solid #2a3341;border-radius:11px;background:#0a0e14;padding:12px}
+.result-top{display:flex;justify-content:space-between;align-items:center;color:#8995a7;font-size:10px;margin-bottom:9px}
+.code-grid{display:grid;grid-template-columns:1.1fr 1fr .7fr;gap:7px}
+.codebox{padding:9px;border:1px solid #242d39;border-radius:8px;background:#070a0f;min-width:0}
+.codebox small{display:block;color:#667386;font-size:9px;margin-bottom:4px}
+.codebox code{font-family:"Cascadia Code",Consolas,monospace;color:#e8f8fc;font-size:12px;word-break:break-all}
+.download{display:inline-flex;margin-top:9px;color:#5bd8fb;text-decoration:none;font-size:10px}
+.warn{margin-top:8px;color:#e6c57b;font-size:10px;line-height:1.6;white-space:pre-wrap}
+.error{color:#ffadb6}
+details summary{cursor:pointer;color:#9ba8ba}
+pre{font-size:9px;color:#9faabd;background:#070a0f;padding:8px;border-radius:7px;overflow:auto}
+@media(max-width:980px){.grid-shell{grid-template-columns:1fr}.side{position:static}.option-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.container{width:min(100% - 16px,1180px);margin-top:16px}.topbar{padding:0 12px}.hero{grid-template-columns:1fr}.hero-badge{display:none}.option-grid,.values{grid-template-columns:1fr}.counts{grid-template-columns:repeat(5,1fr);gap:5px}.code-grid{grid-template-columns:1fr}.search{width:150px}.brand small{display:none}}
+.progress-wrap{margin-top:12px;padding:11px;border:1px solid #26303d;border-radius:9px;background:#0b1017;display:none}
+.progress-wrap.show{display:block}
+.progress-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;font-size:11px}
+.progress-stage{color:#d7e4ee;font-weight:700}
+.progress-percent{color:#57d8ff;font-weight:900}
+.progress-track{height:11px;border-radius:999px;background:#171f2a;overflow:hidden;border:1px solid #27313e}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#0b8fc0,#25c7ff);transition:width .22s ease}
+.progress-detail{margin-top:6px;color:#8392a5;font-size:10px;min-height:15px}
+.account-progress-list{display:grid;gap:6px;margin-top:9px}
+.account-progress{display:grid;grid-template-columns:42px 1fr 42px;gap:7px;align-items:center;font-size:9px;color:#8290a1}
+.account-track{height:6px;background:#161e28;border-radius:99px;overflow:hidden}
+.account-fill{height:100%;background:#23bde9;width:0%;transition:width .2s ease}
+.account-progress.failed .account-fill{background:#d26b76}
+.account-progress.done .account-fill{background:#6bcf91}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="logo">猫</div><div>BCSFE Control<small>2-File HTML Edition</small></div></div>
+  <div id="enginePill" class="engine-pill"><span class="dot"></span><span id="engineText">エンジン確認中</span></div>
+</header>
+<main class="container">
+  <div class="hero">
+    <div><h1>新規アカウント作成</h1><p>ファイル選択なし。編集項目を選んで、SAVE_DATA生成またはコード発行を実行します。</p></div>
+    <div><div id="buildBadge" class="hero-badge">HTML READY</div><div style="margin-top:7px;text-align:right;color:#7fdfff;font-size:10px">⚡ RENDER 2FILE LATEST / 実処理ゲージ / 4並列</div></div>
+  </div>
+  <div id="offlineNote" class="offline-note">HTMLは開けていますがPythonエンジンが停止しています。<b>同じフォルダの app.py を実行</b>してください（例: <code>py app.py</code>）。</div>
+  <div class="grid-shell">
+    <div>
+      <section class="card">
+        <div class="card-head"><div class="card-title">作成設定</div><div class="card-sub">最大5個</div></div>
+        <div class="card-body"><div class="counts">
+          <label><input type="radio" name="count" value="1" checked><span>1個</span></label>
+          <label><input type="radio" name="count" value="2"><span>2個</span></label>
+          <label><input type="radio" name="count" value="3"><span>3個</span></label>
+          <label><input type="radio" name="count" value="4"><span>4個</span></label>
+          <label><input type="radio" name="count" value="5"><span>5個</span></label>
+        </div></div>
+      </section>
+      <section class="card" style="margin-top:14px">
+        <div class="card-head"><div class="card-title">編集項目</div><input id="search" class="search" placeholder="項目を検索"></div>
+        <div class="card-body">
+          <div class="section"><div class="section-title"><span>アイテム・ステージ系</span></div><div class="option-grid" id="itemsStage"></div></div>
+          <div class="section"><div class="section-title"><span>システム・ガマトト系</span></div><div class="option-grid" id="systemGroup"></div></div>
+          <div class="section"><div class="section-title"><span>キャラ系</span></div><div class="option-grid" id="catsGroup"></div>
+            <div class="values">
+              <div class="field"><label>指定キャラID（カンマ区切り）</label><input data-value="cat_ids" placeholder="0,1,2"></div>
+              <div class="field"><label>Lv</label><input data-value="cat_base_level" type="number" value="1" min="1"></div>
+              <div class="field"><label>+値</label><input data-value="cat_plus_level" type="number" value="0" min="0"></div>
+              <div class="field"><label>形態 1〜4</label><input data-value="cat_form" type="number" value="1" min="1" max="4"></div>
+            </div>
+          </div>
+          <div class="section"><div class="section-title"><span>指定値系</span></div><div class="option-grid" id="valuesGroup"></div>
+            <div class="values" id="valueInputs"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <aside class="side">
+      <section class="card">
+        <div class="card-head"><div class="card-title">選択中</div><button class="btn ghost" style="height:29px;padding:0 9px" onclick="resetAll()">リセット</button></div>
+        <div class="card-body">
+          <div id="selectedBox" class="selected-box"><span class="empty">何も選択されていません</span></div>
+          <div class="actions">
+            <button id="localBtn" class="btn" onclick="runBuildLocal()">SAVE_DATAだけ生成</button>
+            <button id="createBtn" class="btn primary" onclick="runCreate()">新規作成＋コード発行</button>
+          </div>
+          <div id="status" class="status">待機中</div>
+          <div id="progressWrap" class="progress-wrap">
+            <div class="progress-head"><span id="progressStage" class="progress-stage">待機</span><span id="progressPercent" class="progress-percent">0%</span></div>
+            <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+            <div id="progressDetail" class="progress-detail"></div><div id="apiBaseView" class="progress-detail"></div>
+            <div id="accountProgressList" class="account-progress-list"></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+  <div id="results" class="results"></div>
+</main>
+<script>
+let API = "";
+let API_READY = null;
+async function probeApi(base){
+  try{
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),1300);
+    const r=await fetch(base+"/api/health",{cache:"no-store",signal:controller.signal});
+    clearTimeout(timer);
+    if(!r.ok)return null;
+    const d=await r.json();
+    if(!d||!d.ok)return null;
+    if(d.api_signature!=="bcsfe-progress-api-v2")return null;
+    if(d.progress_jobs!==true)return null;
+    return d;
+  }catch{return null;}
+}
+async function resolveApi(){
+  const candidates=[];
+  const add=base=>{if(!base)return;base=base.replace(/\/+$/,"");if(!candidates.includes(base))candidates.push(base);};
+  const isFile=location.protocol==="file:";
+  const host=(location.hostname||"").toLowerCase();
+  const isLoopback=host==="127.0.0.1"||host==="localhost"||host==="::1"||host.endsWith(".localhost");
+  if(location.protocol==="http:"||location.protocol==="https:"){
+    const sameOriginHealth=await probeApi(location.origin);
+    if(sameOriginHealth){API=location.origin.replace(/\/+$/,"");const v=document.getElementById("apiBaseView");if(v)v.textContent="API: "+API+" / verified";return sameOriginHealth;}
+    if(!isLoopback){throw new Error("公開先のPythonプロセスに接続できません。 app.py と index.html を同じデプロイへ反映してください。 必要なAPI署名: bcsfe-progress-api-v2");}
+  }
+  if(isFile||isLoopback){add("http://127.0.0.1:10000");add("http://localhost:10000");}
+  for(const base of candidates){const health=await probeApi(base);if(health){API=base;const v=document.getElementById("apiBaseView");if(v)v.textContent="API: "+base+" / verified";return health;}}
+  throw new Error("Python APIが見つかりません。app.pyを起動してください。 ローカルURL: http://127.0.0.1:10000");
+}
+async function ensureApi(){if(!API_READY){API_READY=resolveApi().catch(err=>{API_READY=null;throw err;});}return API_READY;}
+const groups = {
+  itemsStage:[['max_catfood','ネコカン 上限'],['max_xp','XP 上限'],['max_np','NP 上限'],['max_normal_tickets','にゃんこチケット 上限'],['max_rare_tickets','レアチケット 上限'],['max_platinum_tickets','プラチナチケット 上限'],['max_legend_tickets','レジェンドチケット 上限'],['max_leadership','リーダーシップ 上限'],['max_battle_items','バトルアイテム全種 上限'],['max_catseyes','キャッツアイ全種 上限'],['max_catamins','ネコビタン全種 上限'],['max_materials','城素材全種 上限'],['max_catfruit','マタタビ全種 上限'],['max_orbs','本能玉全種 998'],['main_story','メインステージ お宝金＆クリア'],['main_zombies','メインゾンビ全クリア'],['aku_clear','魔界編全クリア'],['legend_clear','レジェンド全クリア'],['event_clear','イベント全クリア'],['collab_clear','コラボ全クリア'],['uncanny_clear','真レジェンド全クリア'],['zero_clear','零レジェンド全クリア'],['all_stages','全ステージ全クリア']],
+  systemGroup:[['gamatoto_max','ガマトトLv.Max'],['gamatoto_helpers','ガマトト助手全レジェンド化'],['ototo_max','オトート全城強化Lv.Max'],['shrine_max','にゃんこ神社Lv.Max'],['facilities_max','全施設Lv.Max'],['gold_pass','ゴールド会員化'],['slots_max','編成スロット数最大化'],['medals_all','にゃんこメダル全解放'],['tutorial_skip','チュートリアルスキップ'],['rank_popup_hide','ランクアップポップアップ非表示'],['enemy_guide_all','敵キャラ図鑑全解放'],['playtime_720','プレイ時間 +720時間']],
+  catsGroup:[['cats_unlock_all','全キャラ解放'],['cats_max_plus','全キャラLv.Max+'],['cats_max','全キャラLv.Max'],['cats_form_max','全キャラ最大形態化'],['cats_talents_all','全キャラ本能解放'],['cats_clean','エラーキャラ削除'],['spec_cat_unlock','指定キャラ解放 ★'],['spec_cat_remove','指定キャラ削除 ★'],['spec_cat_max_plus','指定キャラLv.Max+ ★'],['spec_cat_max','指定キャラLv.Max ★'],['spec_cat_form_max','指定キャラ最終形態化 ★'],['spec_cat_level','指定キャラLv/+値指定 ★'],['spec_cat_form','指定キャラ形態指定 ★']],
+  valuesGroup:[['value_catfood','ネコカン 指定'],['value_xp','XP 指定'],['value_np','NP 指定'],['value_normal_tickets','にゃんこチケット 指定'],['value_rare_tickets','レアチケット 指定'],['value_platinum_tickets','プラチナチケット 指定'],['value_legend_tickets','レジェンドチケット 指定'],['value_leadership','リーダーシップ 指定'],['value_battle_items','バトルアイテム全種 指定'],['value_catamins','ネコビタン全種 指定'],['value_catseyes','キャッツアイ全種 指定'],['value_materials','城素材全種 指定'],['value_catfruit','マタタビ全種 指定'],['value_orbs','本能玉全種 指定'],['value_facilities','全施設 指定'],['value_playtime','プレイ時間 指定']]
+};
+const valueFields=[['catfood','ネコカン'],['xp','XP'],['np','NP'],['normal_tickets','にゃんこチケット'],['rare_tickets','レアチケット'],['platinum_tickets','プラチナチケット'],['legend_tickets','レジェンドチケット'],['leadership','リーダーシップ'],['battle_items','バトルアイテム全種'],['catamins','ネコビタン全種'],['catseyes','キャッツアイ全種'],['base_materials','城素材全種'],['catfruit','マタタビ全種'],['talent_orbs','本能玉全種'],['facility_level','全施設Lv'],['play_hours','プレイ時間 時'],['play_minutes','プレイ時間 分']];
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function makeOptions(id,rows){const el=document.getElementById(id);el.innerHTML=rows.map(([k,l])=>`<label class="opt" data-search="${esc(l.toLowerCase())}"><input type="checkbox" data-key="${esc(k)}" data-label="${esc(l)}"><span>${esc(l)}</span></label>`).join('')}
+Object.entries(groups).forEach(([id,rows])=>makeOptions(id,rows));
+document.getElementById('valueInputs').innerHTML=valueFields.map(([k,l])=>`<div class="field"><label>${esc(l)}</label><input data-value="${esc(k)}" type="number" value="0" min="0"></div>`).join('');
+function selected(){return [...document.querySelectorAll('[data-key]:checked')].map(x=>x.dataset.key)}
+function values(){const o={};document.querySelectorAll('[data-value]').forEach(x=>o[x.dataset.value]=x.value);return o}
+function payload(){return {selected:selected(),values:values(),count:Number(document.querySelector('input[name=count]:checked').value)}}
+function updateSelected(){const rows=[...document.querySelectorAll('[data-key]:checked')];const box=document.getElementById('selectedBox');box.innerHTML=rows.length?rows.map(x=>`<span class="chip">${esc(x.dataset.label)}</span>`).join(''):'<span class="empty">何も選択されていません</span>';localStorage.setItem('bcsfe-selected',JSON.stringify(rows.map(x=>x.dataset.key)))}
+document.addEventListener('change',e=>{if(e.target.matches('[data-key]'))updateSelected()});
+document.getElementById('search').addEventListener('input',e=>{const q=e.target.value.toLowerCase().trim();document.querySelectorAll('.opt').forEach(x=>x.style.display=!q||x.dataset.search.includes(q)?'flex':'none')});
+function resetAll(){document.querySelectorAll('[data-key]').forEach(x=>x.checked=false);document.querySelectorAll('[data-value]').forEach(x=>{x.value=(x.dataset.value==='cat_base_level'||x.dataset.value==='cat_form')?'1':'0'});updateSelected();document.getElementById('results').innerHTML='';setStatus('リセットしました')}
+function setStatus(t,k=''){const e=document.getElementById('status');e.textContent=t;e.className='status '+k}
+function initProgress(count){const w=document.getElementById('progressWrap');w.classList.add('show');document.getElementById('progressFill').style.width='0%';document.getElementById('progressPercent').textContent='0%';document.getElementById('progressStage').textContent='開始';document.getElementById('progressDetail').textContent='';const list=document.getElementById('accountProgressList');list.innerHTML=Array.from({length:count},(_,i)=>`<div class="account-progress" id="acctProgress${i}"><span>${i+1}個目</span><div class="account-track"><div class="account-fill"></div></div><span class="acct-pct">0%</span></div>`).join('');}
+function updateProgress(job){const p=Math.max(0,Math.min(100,Number(job.progress||0)));document.getElementById('progressFill').style.width=p+'%';document.getElementById('progressPercent').textContent=p+'%';document.getElementById('progressStage').textContent=job.stage||'処理中';const active=(job.accounts||[]).find(a=>a.state==='running')||(job.accounts||[]).find(a=>a.state==='failed');document.getElementById('progressDetail').textContent=active?`${active.stage||''}${active.detail?' — '+active.detail:''}`:'';(job.accounts||[]).forEach((a,i)=>{const row=document.getElementById('acctProgress'+i);if(!row)return;const ap=Math.max(0,Math.min(100,Number(a.progress||0)));row.querySelector('.account-fill').style.width=ap+'%';row.querySelector('.acct-pct').textContent=ap+'%';row.classList.toggle('failed',a.state==='failed');row.classList.toggle('done',a.state==='done');row.title=(a.stage||'')+(a.detail?' — '+a.detail:'');});}
+async function getJob(jobId){await ensureApi();const r=await fetch(API+'/api/job/'+encodeURIComponent(jobId),{cache:'no-store'});let d;try{d=await r.json()}catch{throw new Error('ジョブ応答を読み取れません / HTTP '+r.status+' / API='+API)}if(!r.ok)throw new Error((d.error||('HTTP '+r.status))+' / API='+API);return d;}
+async function api(path,body){await ensureApi();const r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});let d;try{d=await r.json()}catch{throw new Error('JSON応答を読み取れません / HTTP '+r.status+' / API='+API)}if(Array.isArray(d.results))return d;if(!r.ok||!d.ok)throw new Error((d.error||('HTTP '+r.status))+' / API='+API);return d;}
+function renderResults(d){const wrap=document.getElementById('results');wrap.innerHTML='';(d.results||[]).forEach((r,i)=>{const ok=!r.error&&r.ok!==false;const logs=(r.bcsfe_log_tail||[]).join('\n');const warnings=(r.warnings||[]).map(w=>`<div class="warn">⚠ ${esc(w)}</div>`).join('');const dl=r.download?(r.download.startsWith('http')?r.download:API+r.download):'';const el=document.createElement('section');el.className='result';el.innerHTML=`<div class="result-top"><b>${i+1}個目</b><span>${ok?'完了':esc(r.stage||'失敗')} ${esc(r.game_version||'')}</span></div><div class="code-grid"><div class="codebox"><small>問い合わせコード</small><code>${esc(r.inquiry_code||'-')}</code></div><div class="codebox"><small>引き継ぎコード</small><code>${esc(r.transfer_code||'-')}</code></div><div class="codebox"><small>確認コード</small><code>${esc(r.confirmation_code||'-')}</code></div></div>${dl?`<a class="download" href="${esc(dl)}">SAVE_DATAを保存</a>`:''}${r.managed_item_details_count!==undefined?`<div class="warn">managedItemDetails: ${esc(r.managed_item_details_count)}件</div>`:''}${r.error?`<div class="warn error"><b>エラー:</b> ${esc(r.error)}</div>`:''}${warnings}${logs?`<details class="warn"><summary>BCSFEログ</summary><pre>${esc(logs)}</pre></details>`:''}`;wrap.appendChild(el)})}
+async function runBuildLocal(){const b=document.getElementById('localBtn');b.disabled=true;setStatus('SAVE_DATA生成中…');try{const d=await api('/api/build-local',payload());renderResults(d);setStatus('SAVE_DATAを生成しました','ok')}catch(e){setStatus('失敗: '+e.message,'err')}finally{b.disabled=false}}
+async function runCreate(){const b=document.getElementById('createBtn');b.disabled=true;const body=payload();const count=Number(body.count||1);initProgress(count);setStatus('実処理の進捗を取得中…');try{const start=await api('/api/create-job',body);const jobId=start.job_id;let job;for(;;){job=await getJob(jobId);updateProgress(job);if(job.state==='done')break;await new Promise(r=>setTimeout(r,250));}renderResults(job);const first=(job.results||[]).find(x=>x.error||x.ok===false);if(first){setStatus(`失敗した段階: ${first.stage||'不明'}\n${first.error||'詳細不明'}`,'err');}else{setStatus('完了','ok');}}catch(e){setStatus('通信/表示エラー: '+e.message+(API?'\n接続先: '+API:''),'err');}finally{b.disabled=false;}}
+async function health(){const pill=document.getElementById('enginePill');const txt=document.getElementById('engineText');const note=document.getElementById('offlineNote');try{const d=await ensureApi();pill.className='engine-pill online';if(d.engine_status==='ready'){txt.textContent=`Python接続 / BCSFE準備完了 / ports:${(d.listen_ports||[]).join(',')} / ${API}`;note.classList.remove('show');}else if(d.engine_status==='error'){txt.textContent='Python接続 / BCSFE起動失敗';note.classList.add('show');note.textContent='BCSFEエラー: '+(d.engine_error||'詳細不明');}else{txt.textContent=`Python接続 / ${d.engine_stage||'BCSFE準備中'} / ports:${(d.listen_ports||[]).join(',')} / ${API}`;note.classList.add('show');note.textContent='Pythonバックエンドは接続済みです。'+(d.engine_detail?(' '+d.engine_detail):' BCSFEを準備しています。');}document.getElementById('buildBadge').textContent=d.build||'ENGINE ONLINE';}catch(e){pill.className='engine-pill offline';txt.textContent='Pythonバックエンド未接続';note.classList.add('show');note.textContent='公開URLからPython APIへ接続できません: '+e.message;}}
+try{const saved=JSON.parse(localStorage.getItem('bcsfe-selected')||'[]');saved.forEach(k=>{const x=document.querySelector(`[data-key="${CSS.escape(k)}"]`);if(x)x.checked=true})}catch{}
+updateSelected();health();setInterval(health,8000);
+</script>
+</body>
+</html>
